@@ -9,6 +9,7 @@ import (
 
 	"github.com/tendermint/basecoin/types"
 
+	abci "github.com/tendermint/abci/types"
 	cmn "github.com/tendermint/go-common"
 	client "github.com/tendermint/go-rpc/client"
 	"github.com/tendermint/go-wire"
@@ -158,13 +159,16 @@ func AppTx(c *cli.Context, name string, data []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Response: %X\n", res)
+	fmt.Println("Response:")
+	fmt.Printf("Code: %v\n", res.Code)
+	fmt.Printf("Data: %X\n", res.Data)
+	fmt.Printf("Log: %s\n", res.Log)
 
 	return nil
 }
 
 // broadcast the transaction to tendermint
-func broadcastTx(c *cli.Context, tx types.Tx) ([]byte, error) {
+func broadcastTx(c *cli.Context, tx types.Tx) (*abci.ResponseDeliverTx, error) {
 	tmResult := new(ctypes.TMResult)
 	tmAddr := c.String("node")
 	clientURI := client.NewClientURI(tmAddr)
@@ -188,7 +192,7 @@ func broadcastTx(c *cli.Context, tx types.Tx) ([]byte, error) {
 		r := res.DeliverTx
 		return nil, errors.New(cmn.Fmt("BroadcastTxCommit got non-zero exit code: %v. %X; %s", r.Code, r.Data, r.Log))
 	}
-	return res.DeliverTx.Data, nil
+	return res.DeliverTx, nil
 }
 
 // if the sequence flag is set, return it;
